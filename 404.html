@@ -2,55 +2,38 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/qrcts/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>二维码溯源系统</title>
     <script>
       (function(){
         var base = '/qrcts';
-        function stripBase(path) {
-          if (path.indexOf(base) === 0) {
-            return path.slice(base.length) || '/';
-          }
-          return path;
+        var pathname = window.location.pathname;
+        var search = window.location.search;
+        var hash = window.location.hash;
+        if (pathname.indexOf(base) === 0) {
+          var newPath = pathname.slice(base.length) || '/';
+          window.history.replaceState(null, '', newPath + search + hash);
         }
-        var origPathname = window.location.pathname;
-        var fakePathname = stripBase(origPathname);
-        try {
-          var loc = Object.create(window.location);
-          Object.defineProperty(window, 'location', {
-            get: function() {
-              var result = Object.assign({}, window.location);
-              Object.defineProperty(result, 'pathname', {
-                get: function() { return fakePathname; },
-                enumerable: true,
-                configurable: true
-              });
-              return result;
-            },
-            enumerable: true,
-            configurable: true
-          });
-        } catch(e) {}
-        var origPushState = history.pushState;
-        var origReplaceState = history.replaceState;
-        history.pushState = function(state, title, url) {
+        var origPush = history.pushState;
+        var origReplace = history.replaceState;
+        history.pushState = function(s, t, url) {
           if (typeof url === 'string' && url.charAt(0) === '/') {
             url = base + (url === '/' ? '' : url);
           }
-          return origPushState.call(this, state, title, url);
+          return origPush.call(this, s, t, url);
         };
-        history.replaceState = function(state, title, url) {
+        history.replaceState = function(s, t, url) {
           if (typeof url === 'string' && url.charAt(0) === '/') {
             url = base + (url === '/' ? '' : url);
           }
-          return origReplaceState.call(this, state, title, url);
+          return origReplace.call(this, s, t, url);
         };
       })();
     </script>
-    <script src="env-config.js"></script>
-    <script type="module" crossorigin src="assets/index-muZMgV9K.js"></script>
-    <link rel="stylesheet" crossorigin href="assets/index-CMqRsil8.css">
+    <script src="/qrcts/env-config.js"></script>
+    <script type="module" crossorigin src="/qrcts/assets/index-muZMgV9K.js"></script>
+    <link rel="stylesheet" crossorigin href="/qrcts/assets/index-CMqRsil8.css">
   </head>
   <body>
     <div id="root"></div>

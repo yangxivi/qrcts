@@ -8,26 +8,56 @@
     <script>
       (function(){
         var base = '/qrcts';
-        var pathname = window.location.pathname;
-        var search = window.location.search;
-        var hash = window.location.hash;
-        if (pathname.indexOf(base) === 0) {
-          var newPath = pathname.slice(base.length) || '/';
-          window.history.replaceState(null, '', newPath + search + hash);
+        function strip(p) {
+          return p.indexOf(base) === 0 ? (p.slice(base.length) || '/') : p;
         }
-        var origPush = history.pushState;
-        var origReplace = history.replaceState;
-        history.pushState = function(s, t, url) {
-          if (typeof url === 'string' && url.charAt(0) === '/') {
-            url = base + (url === '/' ? '' : url);
+        try {
+          var origDescriptor = Object.getOwnPropertyDescriptor(Location.prototype, 'pathname');
+          Object.defineProperty(Location.prototype, 'pathname', {
+            get: function() {
+              return strip(origDescriptor.get.call(this));
+            },
+            set: function(v) {
+              origDescriptor.set.call(this, v);
+            },
+            enumerable: true,
+            configurable: true
+          });
+        } catch(e) {}
+        try {
+          var hrefOrig = Object.getOwnPropertyDescriptor(Location.prototype, 'href');
+          Object.defineProperty(Location.prototype, 'href', {
+            get: function() {
+              var h = hrefOrig.get.call(this);
+              try {
+                var u = new URL(h);
+                if (u.pathname.indexOf(base) === 0) {
+                  u.pathname = strip(u.pathname);
+                  return u.toString();
+                }
+              } catch(e2) {}
+              return h;
+            },
+            set: function(v) {
+              hrefOrig.set.call(this, v);
+            },
+            enumerable: true,
+            configurable: true
+          });
+        } catch(e) {}
+        var op = history.pushState;
+        var or = history.replaceState;
+        function wrapUrl(url) {
+          if (typeof url === 'string' && url.charAt(0) === '/' && url.indexOf(base) !== 0) {
+            return base + url;
           }
-          return origPush.call(this, s, t, url);
+          return url;
+        }
+        history.pushState = function(s, t, url) {
+          return op.call(this, s, t, wrapUrl(url));
         };
         history.replaceState = function(s, t, url) {
-          if (typeof url === 'string' && url.charAt(0) === '/') {
-            url = base + (url === '/' ? '' : url);
-          }
-          return origReplace.call(this, s, t, url);
+          return or.call(this, s, t, wrapUrl(url));
         };
       })();
     </script>

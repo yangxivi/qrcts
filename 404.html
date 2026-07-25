@@ -6,12 +6,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>二维码溯源系统</title>
     <script>
-      // GitHub Pages SPA 404 回退：保存路径并重定向到首页
-      var path = window.location.pathname + window.location.search + window.location.hash;
-      sessionStorage.setItem('spa-redirect-path', path);
-      var base = '/qrcts/';
-      window.location.replace(base + (path.startsWith(base) ? path.slice(base.length) : path.slice(1) || ''));
+      (function(){
+        var base = '/qrcts';
+        var pathname = window.location.pathname;
+        if (pathname.indexOf(base) === 0) {
+          var newPath = pathname.slice(base.length) || '/';
+          window.history.replaceState(null, '', newPath + window.location.search + window.location.hash);
+        }
+      })();
     </script>
+    <script src="env-config.js"></script>
+    <script type="module" crossorigin src="assets/index-muZMgV9K.js"></script>
+    <link rel="stylesheet" crossorigin href="assets/index-CMqRsil8.css">
   </head>
-  <body></body>
+  <body>
+    <div id="root"></div>
+  </body>
 </html>

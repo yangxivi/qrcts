@@ -2,68 +2,12 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/qrcts/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>二维码溯源系统</title>
-    <script>
-      (function(){
-        var base = '/qrcts';
-        function strip(p) {
-          return p.indexOf(base) === 0 ? (p.slice(base.length) || '/') : p;
-        }
-        try {
-          var origDescriptor = Object.getOwnPropertyDescriptor(Location.prototype, 'pathname');
-          Object.defineProperty(Location.prototype, 'pathname', {
-            get: function() {
-              return strip(origDescriptor.get.call(this));
-            },
-            set: function(v) {
-              origDescriptor.set.call(this, v);
-            },
-            enumerable: true,
-            configurable: true
-          });
-        } catch(e) {}
-        try {
-          var hrefOrig = Object.getOwnPropertyDescriptor(Location.prototype, 'href');
-          Object.defineProperty(Location.prototype, 'href', {
-            get: function() {
-              var h = hrefOrig.get.call(this);
-              try {
-                var u = new URL(h);
-                if (u.pathname.indexOf(base) === 0) {
-                  u.pathname = strip(u.pathname);
-                  return u.toString();
-                }
-              } catch(e2) {}
-              return h;
-            },
-            set: function(v) {
-              hrefOrig.set.call(this, v);
-            },
-            enumerable: true,
-            configurable: true
-          });
-        } catch(e) {}
-        var op = history.pushState;
-        var or = history.replaceState;
-        function wrapUrl(url) {
-          if (typeof url === 'string' && url.charAt(0) === '/' && url.indexOf(base) !== 0) {
-            return base + url;
-          }
-          return url;
-        }
-        history.pushState = function(s, t, url) {
-          return op.call(this, s, t, wrapUrl(url));
-        };
-        history.replaceState = function(s, t, url) {
-          return or.call(this, s, t, wrapUrl(url));
-        };
-      })();
-    </script>
-    <script src="/qrcts/env-config.js"></script>
-    <script type="module" crossorigin src="/qrcts/assets/index-muZMgV9K.js"></script>
-    <link rel="stylesheet" crossorigin href="/qrcts/assets/index-CMqRsil8.css">
+    <script src="/env-config.js"></script>
+    <script type="module" crossorigin src="/assets/index-muZMgV9K.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CMqRsil8.css">
   </head>
   <body>
     <div id="root"></div>

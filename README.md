@@ -29,12 +29,6 @@
 系统已部署到 GitHub Pages：
 👉 **https://yangxivi.github.io/qrcts/**
 
-### 默认账号
-
-| 账号 | 密码 | 角色 |
-|------|------|------|
-| xiviyang | 54xiviyang | admin |
-
 > 可通过登录页「立即注册」创建新账号。
 
 ## 技术栈

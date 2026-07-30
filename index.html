@@ -4,8 +4,11 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/qrcts/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>二维码溯源系统</title>
-    <script src="/qrcts/env-config.js?v=20260731"></script>
+    <script src="/qrcts/env-config.js?v=31b"></script>
     <!-- 修复 GitHub Pages 项目子路径 -->
     <script>
       (function() {
@@ -21,7 +24,9 @@
         }
       })();
     </script>
-    <!-- 响应式布局适配 -->
+    <!-- Tailwind CSS 先加载 -->
+    <link rel="stylesheet" crossorigin href="/qrcts/assets/index-CMqRsil8.css?v=31b">
+    <!-- 响应式覆盖 CSS 后加载（确保优先级） -->
     <style>
       html { font-size: 16px; -webkit-text-size-adjust: 100%; }
       body { overflow-x: hidden; }
@@ -45,13 +50,9 @@
         .flex.h-screen > div:not(aside) {
           width: 100% !important;
         }
-        /* 只有有侧边栏的页面才给 main 留汉堡按钮空间 */
-        .flex.h-screen > main {
-          padding-left: 52px !important;
-        }
       }
 
-      /* ===== 汉堡按钮（JS 动态控制显示） ===== */
+      /* ===== 汉堡按钮 ===== */
       .mobile-menu-btn {
         display: none;
         position: fixed;
@@ -135,15 +136,19 @@
         button { min-height: 38px; }
       }
 
-      /* ===== 产品基本信息卡片：全平台每项一行 =====
+      /* ===== 产品基本信息卡片：全平台每项一行（CSS 后备） =====
          真实 DOM 类名: grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4
-         5 个子元素: SN码 / 产品名称 / 产品型号 / 生产日期 / 检验状态 */
+         5 个子元素: SN码 / 产品名称 / 产品型号 / 生产日期 / 检验状态
+         JS 会通过文字内容查找并强制 block 布局，这里 CSS 作为后备 */
       .grid.grid-cols-2[class*="sm:grid-cols-3"][class*="lg:grid-cols-5"] {
-        grid-template-columns: 1fr !important;
-        gap: 6px 0 !important;
+        display: block !important;
+        grid-template-columns: none !important;
+        gap: 0 !important;
       }
       .grid.grid-cols-2[class*="sm:grid-cols-3"][class*="lg:grid-cols-5"] > div {
-        padding: 5px 0 !important;
+        display: block !important;
+        width: 100% !important;
+        padding: 6px 0 !important;
         border-bottom: 1px solid #f1f5f9;
       }
       .grid.grid-cols-2[class*="sm:grid-cols-3"][class*="lg:grid-cols-5"] > div:last-child {
@@ -155,12 +160,24 @@
         word-break: break-all;
       }
 
-      /* ===== 原材料录入页产品信息卡: 移动端单列 =====
+      /* ===== 原材料录入页产品信息卡: 全平台单列 =====
          真实 DOM 类名: grid grid-cols-3 gap-4 text-sm */
+      .grid.grid-cols-3.gap-4.text-sm {
+        display: block !important;
+        grid-template-columns: none !important;
+        gap: 0 !important;
+      }
+      .grid.grid-cols-3.gap-4.text-sm > div {
+        display: block !important;
+        width: 100% !important;
+        padding: 6px 0 !important;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .grid.grid-cols-3.gap-4.text-sm > div:last-child {
+        border-bottom: none !important;
+      }
       @media (max-width: 639px) {
         .grid.grid-cols-3.gap-4.text-sm {
-          grid-template-columns: 1fr !important;
-          gap: 6px !important;
           font-size: 13px !important;
         }
         .grid.grid-cols-3.gap-4.text-sm .font-mono {
@@ -268,8 +285,7 @@
         .p-6 { padding: 18px !important; }
       }
     </style>
-    <script type="module" crossorigin src="/qrcts/assets/index-muZMgV9K.js"></script>
-    <link rel="stylesheet" crossorigin href="/qrcts/assets/index-CMqRsil8.css">
+    <script type="module" crossorigin src="/qrcts/assets/index-muZMgV9K.js?v=31b"></script>
   </head>
   <body>
     <div id="root"></div>
@@ -305,75 +321,124 @@
           }
         });
 
-        /* ===== 产品信息卡 inline style 双保险 =====
-           CSS 选择器已能匹配，但 React 重新渲染时可能覆盖 class，
-           这里用 inline style 确保万无一失 */
-        function forceProductGridSingleCol() {
-          /* 产品基本信息卡: grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 */
-          var grids = document.querySelectorAll('.grid.grid-cols-2');
-          for (var i = 0; i < grids.length; i++) {
-            var el = grids[i];
-            var cls = el.className || '';
-            if (cls.indexOf('lg:grid-cols-5') !== -1 && cls.indexOf('sm:grid-cols-3') !== -1) {
-              if (el.style.getPropertyValue('grid-template-columns') !== '1fr') {
-                el.style.setProperty('grid-template-columns', '1fr', 'important');
-                el.style.setProperty('gap', '6px 0', 'important');
+        /* ===== 核心：强制产品信息卡每项一行 =====
+           不依赖 CSS 选择器，直接通过"SN 码"文字内容定位 grid 容器，
+           然后把 display:grid 改成 display:block，每个子元素自然占一行。
+           同时覆盖原材料录入页的 grid-cols-3 产品信息卡。 */
+        function forceSingleCol() {
+          /* 策略1：通过"SN 码"/"SN码"文字标签定位 */
+          var allP = document.querySelectorAll('p, span, small, div');
+          for (var i = 0; i < allP.length; i++) {
+            var t = (allP[i].textContent || '').trim();
+            if (t === 'SN 码' || t === 'SN码' || t === 'SN') {
+              var node = allP[i];
+              for (var up = 0; up < 4; up++) {
+                node = node.parentElement;
+                if (!node) break;
+                var cls = node.className || '';
+                if (cls.indexOf('grid') !== -1 && node.children.length >= 3) {
+                  applyBlockLayout(node);
+                  break;
+                }
               }
-              var kids = el.children;
-              for (var k = 0; k < kids.length; k++) {
-                kids[k].style.setProperty('padding', '5px 0', 'important');
-                kids[k].style.setProperty('border-bottom', k < kids.length - 1 ? '1px solid #f1f5f9' : 'none', 'important');
-              }
+            }
+          }
+
+          /* 策略2：通过精确类名匹配（后备） */
+          var grids = document.querySelectorAll('.grid');
+          for (var j = 0; j < grids.length; j++) {
+            var g = grids[j];
+            var gc = g.className || '';
+            if (gc.indexOf('grid-cols-2') !== -1 &&
+                gc.indexOf('lg:grid-cols-5') !== -1) {
+              applyBlockLayout(g);
+            }
+            if (gc.indexOf('grid-cols-3') !== -1 &&
+                gc.indexOf('text-sm') !== -1 &&
+                gc.indexOf('lg:') === -1) {
+              applyBlockLayout(g);
             }
           }
         }
 
-        /* ===== 路由变化时：关闭侧边栏 + 重新强制单列 ===== */
+        function applyBlockLayout(gridEl) {
+          if (gridEl.getAttribute('data-single-col') === '1') {
+            var k = gridEl.children;
+            for (var c = 0; c < k.length; c++) {
+              if (k[c].style.display !== 'block') {
+                k[c].style.setProperty('display', 'block', 'important');
+                k[c].style.setProperty('width', '100%', 'important');
+              }
+            }
+            return;
+          }
+          gridEl.setAttribute('data-single-col', '1');
+          gridEl.style.setProperty('display', 'block', 'important');
+          gridEl.style.setProperty('grid-template-columns', 'none', 'important');
+          gridEl.style.setProperty('gap', '0', 'important');
+          var kids = gridEl.children;
+          for (var k = 0; k < kids.length; k++) {
+            kids[k].style.setProperty('display', 'block', 'important');
+            kids[k].style.setProperty('width', '100%', 'important');
+            kids[k].style.setProperty('padding', '6px 0', 'important');
+            kids[k].style.setProperty('border-bottom',
+              k < kids.length - 1 ? '1px solid #f1f5f9' : 'none', 'important');
+          }
+          var firstMono = kids[0] ? kids[0].querySelector('.font-mono') : null;
+          if (firstMono) {
+            firstMono.style.setProperty('font-size', '14px', 'important');
+            firstMono.style.setProperty('line-height', '1.6', 'important');
+            firstMono.style.setProperty('word-break', 'break-all', 'important');
+          }
+        }
+
+        /* ===== 路由变化处理 ===== */
         var origPushState = history.pushState;
         history.pushState = function() {
           origPushState.apply(this, arguments);
           var aside = document.querySelector('aside.w-60.sidebar-open');
           if (aside) toggleSidebar();
-          setTimeout(forceProductGridSingleCol, 100);
-          setTimeout(forceProductGridSingleCol, 500);
+          setTimeout(forceSingleCol, 50);
+          setTimeout(forceSingleCol, 200);
+          setTimeout(forceSingleCol, 600);
         };
         var origReplaceState = history.replaceState;
         history.replaceState = function() {
           origReplaceState.apply(this, arguments);
-          setTimeout(forceProductGridSingleCol, 100);
+          setTimeout(forceSingleCol, 50);
+          setTimeout(forceSingleCol, 200);
         };
         window.addEventListener('popstate', function() {
-          setTimeout(forceProductGridSingleCol, 100);
+          setTimeout(forceSingleCol, 50);
+          setTimeout(forceSingleCol, 200);
         });
 
-        /* ===== MutationObserver: 动态检测侧边栏 + 产品信息卡 ===== */
+        /* ===== MutationObserver ===== */
+        var moTimer = null;
         var observer = new MutationObserver(function() {
-          /* 只有有侧边栏的页面才显示汉堡按钮（移动端） */
           var aside = document.querySelector('aside.w-60');
           if (window.innerWidth <= 767) {
             btn.style.display = aside ? 'flex' : 'none';
           } else {
             btn.style.display = 'none';
           }
-          /* 如果侧边栏不存在但按钮是 active 状态，重置 */
           if (!aside && btn.classList.contains('active')) {
             btn.classList.remove('active');
             overlay.classList.remove('active');
             document.body.style.overflow = '';
           }
-          /* 强制产品信息卡单列 */
-          forceProductGridSingleCol();
+          if (moTimer) clearTimeout(moTimer);
+          moTimer = setTimeout(forceSingleCol, 30);
         });
         observer.observe(document.body, { childList: true, subtree: true });
 
-        /* 初始执行 */
-        forceProductGridSingleCol();
-        setTimeout(forceProductGridSingleCol, 200);
-        setTimeout(forceProductGridSingleCol, 800);
-        setTimeout(forceProductGridSingleCol, 2000);
-        setTimeout(forceProductGridSingleCol, 4000);
+        forceSingleCol();
+        setTimeout(forceSingleCol, 100);
+        setTimeout(forceSingleCol, 300);
+        setTimeout(forceSingleCol, 800);
+        setTimeout(forceSingleCol, 1500);
+        setTimeout(forceSingleCol, 3000);
 
-        /* 窗口大小变化时重新检测 */
         window.addEventListener('resize', function() {
           var aside = document.querySelector('aside.w-60');
           if (window.innerWidth <= 767) {
@@ -381,7 +446,7 @@
           } else {
             btn.style.display = 'none';
           }
-          forceProductGridSingleCol();
+          forceSingleCol();
         });
       })();
     </script>

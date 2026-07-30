@@ -58,5 +58,35 @@ BEGIN
   END IF;
 END $$;
 
+-- ============================================================
+-- 7. 修复 process_records 表（匹配前端"工序流转"功能）
+--    前端 insert/update 使用: sn_code_id, process_id, operator_name, shift, production_date
+--    前端查询排序使用: .order("production_date")
+--    原表只有 operator_id（NOT NULL），前端并不传 operator_id，而是传 operator_name，
+--    且缺少 operator_name/shift/production_date 字段
+--    → 工序流转保存失败、追溯页(/t/:sn)加载因 order by production_date 报错。
+-- ============================================================
+ALTER TABLE public.process_records
+  ALTER COLUMN operator_id DROP NOT NULL,
+  ADD COLUMN IF NOT EXISTS operator_name TEXT NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS shift TEXT NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS production_date TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+-- ============================================================
+-- 8. 修复 sn_materials 表（匹配前端"物料填报"功能）
+--    前端 insert 使用: sn_code_id, name, roll_no, batch_no, filled_by, sort_order
+--    前端查询排序使用: .order("sort_order")
+--    原表只有 material_id（NOT NULL），前端并不传 material_id，而是传 name，
+--    且缺少 name/roll_no/batch_no/filled_by/sort_order 字段
+--    → 物料填报保存失败、追溯页物料加载因 order by sort_order 报错。
+-- ============================================================
+ALTER TABLE public.sn_materials
+  ALTER COLUMN material_id DROP NOT NULL,
+  ADD COLUMN IF NOT EXISTS name TEXT NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS roll_no TEXT NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS batch_no TEXT NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS filled_by TEXT NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;
+
 -- 完成提示
--- 执行后刷新页面，新增产品/工序/物料/企业信息功能即可正常使用
+-- 执行后刷新页面，新增产品/工序/物料/企业信息、工序流转、物料填报、二维码追溯功能即可正常使用

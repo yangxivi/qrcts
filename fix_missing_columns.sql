@@ -37,5 +37,22 @@ ADD COLUMN IF NOT EXISTS website TEXT NOT NULL DEFAULT '';
 -- 将旧 company_name 迁移到新 name 字段（仅当 name 为空时）
 UPDATE public.company_info SET name = company_name WHERE name = '' AND company_name != '';
 
+-- ============================================================
+-- 6. 修改 company_info.id 类型（核心修复）
+--    前端硬编码 id:1（upsert({id:1}) + select().eq("id",1)），
+--    但原 id 是 UUID 类型，无法接受整数 1 → 保存失败(400)。
+--    改为 bigint 使 id=1 可用。company_info 无外键依赖，安全。
+-- ============================================================
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='company_info' AND column_name='id' AND data_type='uuid'
+  ) THEN
+    ALTER TABLE public.company_info ALTER COLUMN id TYPE bigint USING 1;
+    ALTER TABLE public.company_info ALTER COLUMN id SET DEFAULT 1;
+  END IF;
+END $$;
+
 -- 完成提示
 -- 执行后刷新页面，新增产品/工序/物料/企业信息功能即可正常使用

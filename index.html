@@ -172,28 +172,22 @@
       }
 
       /* ============================================
-         产品基本信息卡片：全平台每项一行
+         产品基本信息卡片：全平台每项一行（JS 强制方案）
          SN码 / 产品名称 / 产品型号 / 生产日期 / 检验状态 各占独立一行
          ============================================ */
-      /* 识别产品基本信息卡：grid-cols-2 + lg:grid-cols-5 组合 → 全平台单列 */
-      .grid.grid-cols-2[class*="lg:grid-cols-5"],
-      [class*="grid-cols-2"][class*="lg:grid-cols-5"] {
+      /* JS 注入的 .product-info-single-col 类 */
+      .product-info-single-col {
         grid-template-columns: 1fr !important;
         gap: 8px 0 !important;
       }
-      /* 每个子元素（SN码/名称/型号/日期/状态）各占一行，标签+值垂直排列清晰 */
-      .grid.grid-cols-2[class*="lg:grid-cols-5"] > div,
-      [class*="grid-cols-2"][class*="lg:grid-cols-5"] > div {
+      .product-info-single-col > div {
         padding: 4px 0 !important;
         border-bottom: 1px solid #f1f5f9;
       }
-      .grid.grid-cols-2[class*="lg:grid-cols-5"] > div:last-child,
-      [class*="grid-cols-2"][class*="lg:grid-cols-5"] > div:last-child {
+      .product-info-single-col > div:last-child {
         border-bottom: none !important;
       }
-      /* SN 码文字：等宽字体 + 长码换行 */
-      .grid.grid-cols-2[class*="lg:grid-cols-5"] > div:first-child .font-mono,
-      [class*="grid-cols-2"][class*="lg:grid-cols-5"] > div:first-child .font-mono {
+      .product-info-single-col > div:first-child .font-mono {
         font-size: 14px !important;
         line-height: 1.7;
         word-break: break-all;
@@ -404,14 +398,12 @@
           btn.classList.toggle('active', isOpen);
           overlay.classList.toggle('active', isOpen);
           btn.setAttribute('aria-label', isOpen ? '关闭菜单' : '打开菜单');
-          // 阻止背景滚动
           document.body.style.overflow = isOpen ? 'hidden' : '';
         }
 
         btn.addEventListener('click', toggleSidebar);
         overlay.addEventListener('click', toggleSidebar);
 
-        // ESC 关闭
         document.addEventListener('keydown', function(e) {
           if (e.key === 'Escape') {
             var aside = document.querySelector('aside.w-60.sidebar-open');
@@ -419,13 +411,89 @@
           }
         });
 
-        // 路由变化时自动关闭侧边栏
         var pushState = history.pushState;
         history.pushState = function() {
           pushState.apply(this, arguments);
           var aside = document.querySelector('aside.w-60.sidebar-open');
           if (aside) toggleSidebar();
         };
+      })();
+    </script>
+    <!-- 产品基本信息卡片：强制全平台单列布局 -->
+    <script>
+      (function() {
+        var processed = new WeakSet();
+
+        function isProductInfoGrid(el) {
+          if (!el || el.children.length < 4) return false;
+          var cs = getComputedStyle(el);
+          if (cs.display !== 'grid') return false;
+
+          if (el.children.length === 5) {
+            var labels = el.querySelectorAll('p, span, small, div');
+            for (var i = 0; i < Math.min(labels.length, 10); i++) {
+              var t = labels[i].textContent.trim();
+              if (t === 'SN 码' || t === 'SN码' || t === '产品名称' ||
+                  t === '产品型号' || t === '生产日期' || t === '检验状态' ||
+                  t === '产品状态') return true;
+            }
+            var gtc = cs.gridTemplateColumns;
+            if (gtc && gtc.indexOf('5') !== -1 && gtc.indexOf('1fr') !== -1) return true;
+          }
+
+          var parent = el.parentElement;
+          if (parent) {
+            var h = parent.querySelector('h1,h2,h3,h4,[class*="title"],[class*="heading"]');
+            if (h && h.textContent.indexOf('产品基本') !== -1) return true;
+            var gp = parent.parentElement;
+            if (gp) {
+              var h2 = gp.querySelector('h1,h2,h3,h4,[class*="title"],[class*="heading"]');
+              if (h2 && h2.textContent.indexOf('产品基本') !== -1) return true;
+            }
+          }
+
+          if (el.children.length >= 4 && el.children.length <= 6) {
+            if (el.querySelector('.font-mono')) return true;
+          }
+
+          return false;
+        }
+
+        function applySingleCol(gridEl) {
+          if (processed.has(gridEl)) return;
+          processed.add(gridEl);
+          gridEl.classList.add('product-info-single-col');
+        }
+
+        function scanAll() {
+          var all = document.querySelectorAll('[class*="grid"], [style*="grid"]');
+          for (var i = 0; i < all.length; i++) {
+            if (isProductInfoGrid(all[i])) applySingleCol(all[i]);
+          }
+        }
+
+        scanAll();
+        setTimeout(scanAll, 200);
+        setTimeout(scanAll, 800);
+        setTimeout(scanAll, 2000);
+
+        var observer = new MutationObserver(function(mutations) {
+          for (var i = 0; i < mutations.length; i++) {
+            var m = mutations[i];
+            if (m.addedNodes.length > 0) {
+              for (var j = 0; j < m.addedNodes.length; j++) {
+                if (m.addedNodes[j].nodeType === 1) { setTimeout(scanAll, 50); return; }
+              }
+            }
+          }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        var origPushState = history.pushState;
+        history.pushState = function() { origPushState.apply(this, arguments); setTimeout(scanAll, 300); };
+        var origReplaceState = history.replaceState;
+        history.replaceState = function() { origReplaceState.apply(this, arguments); setTimeout(scanAll, 300); };
+        window.addEventListener('popstate', function() { setTimeout(scanAll, 300); });
       })();
     </script>
   </body>

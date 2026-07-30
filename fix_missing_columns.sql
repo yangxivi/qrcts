@@ -90,3 +90,83 @@ ALTER TABLE public.sn_materials
 
 -- 完成提示
 -- 执行后刷新页面，新增产品/工序/物料/企业信息、工序流转、物料填报、二维码追溯功能即可正常使用
+
+-- ============================================================
+-- 9. 创建操作工/重置密码 RPC 函数（替代未部署的 Edge Function）
+--    前端原调用 Oe.functions.invoke("create-operator", ...) Edge Function，
+--    但仓库中无此函数源码且未部署 → 新建/重置密码全部失败。
+--    改用 PostgreSQL RPC 函数，直接操作 profiles 表 + bcrypt 密码哈希。
+-- ============================================================
+
+-- 9a. 创建操作工 RPC
+CREATE OR REPLACE FUNCTION public.create_operator_rpc(
+  p_username TEXT,
+  p_password TEXT,
+  p_display_name TEXT,
+  p_role TEXT DEFAULT 'operator',
+  p_allowed_process_ids UUID[] DEFAULT NULL
+)
+RETURNS TABLE(id UUID, username TEXT, display_name TEXT, role TEXT, plain_password TEXT)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_id UUID;
+  v_plain_password TEXT;
+BEGIN
+  -- 如果未提供密码，自动生成 8 位随机密码
+  v_plain_password := CASE
+    WHEN p_password IS NULL OR p_password = '' THEN
+      upper(encode(gen_random_bytes(4), 'hex'))
+    ELSE
+    p_password
+  END;
+
+  -- 检查用户名是否已存在
+  IF EXISTS (SELECT 1 FROM public.profiles WHERE username = p_username) THEN
+    RAISE EXCEPTION '用户名 "%" 已存在', p_username;
+  END IF;
+
+  INSERT INTO public.profiles (username, password_hash, display_name, role, allowed_process_ids)
+  VALUES (p_username, crypt(v_plain_password, gen_salt('bf')), p_display_name, p_role, p_allowed_process_ids)
+  RETURNING id INTO v_id;
+
+  RETURN QUERY SELECT v_id, p_username, p_display_name, p_role, v_plain_password;
+END;
+$$;
+
+-- 9b. 重置操作工密码 RPC
+CREATE OR REPLACE FUNCTION public.reset_operator_password_rpc(
+  p_username TEXT,
+  p_new_password TEXT DEFAULT NULL
+)
+RETURNS TABLE(plain_password TEXT)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_plain_password TEXT;
+BEGIN
+  -- 检查用户是否存在
+  IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE username = p_username) THEN
+    RAISE EXCEPTION '操作工 "%" 不存在', p_username;
+  END IF;
+
+  -- 如果未提供新密码，自动生成 8 位随机密码
+  v_plain_password := CASE
+    WHEN p_new_password IS NULL OR p_new_password = '' THEN
+      upper(encode(gen_random_bytes(4), 'hex'))
+    ELSE
+    p_new_password
+  END;
+
+  UPDATE public.profiles
+  SET password_hash = crypt(v_plain_password, gen_salt('bf'))
+  WHERE username = p_username;
+
+  RETURN QUERY SELECT v_plain_password;
+END;
+$$;
+
+-- 刷新 PostgREST 架构缓存（使新 RPC 立点可用）
+NOTIFY pgrst, 'reload schema';

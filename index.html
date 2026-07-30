@@ -172,16 +172,51 @@
       }
 
       /* ============================================
-         产品信息 / 追溯页字段行：移动端堆叠
+         产品信息卡片：移动端精确 2 列布局
+         桌面端: SN|名称|型号|日期|状态 (5列)
+         移动端: SN码独占一行
+                名称+型号 一行两列
+                日期+状态 一行两列
          ============================================ */
       @media (max-width: 639px) {
-        /* 产品基本信息卡片 (grid-cols-2/3/5) → 全部单列 */
-        [class*="grid-cols-2"],
-        [class*="grid-cols-3"] {
+        /* 产品基本信息卡片：识别 grid-cols-2 + lg:grid-cols-5 的组合 */
+        .grid.grid-cols-2[class*="lg:grid-cols-5"],
+        [class*="grid-cols-2"][class*="lg:grid-cols-5"] {
+          grid-template-columns: 1fr 1fr !important;
+          gap: 10px 16px !important;
+        }
+        /* SN 码（第1个子元素）独占整行 */
+        .grid.grid-cols-2[class*="lg:grid-cols-5"] > div:first-child,
+        [class*="grid-cols-2"][class*="lg:grid-cols-5"] > div:first-child {
+          grid-column: 1 / -1 !important;
+        }
+        /* SN 码文字稍大，保证可读 */
+        .grid.grid-cols-2[class*="lg:grid-cols-5"] > div:first-child .font-mono,
+        [class*="grid-cols-2"][class*="lg:grid-cols-5"] > div:first-child .font-mono {
+          font-size: 13px !important;
+          line-height: 1.6;
+          word-break: break-all;
+        }
+
+        /* 其他页面通用 grid-cols-2/3 → 单列（非产品信息卡） */
+        .grid.grid-cols-2:not([class*="lg:grid-cols-5"]) {
           grid-template-columns: 1fr !important;
           gap: 8px !important;
         }
-        /* 物料录入表单 (grid-cols-12: 4+3+3+2) → 纵向堆叠，每行一个字段 */
+        [class*="grid-cols-3"]:not([class*="lg:grid-cols-5"]) {
+          grid-template-columns: 1fr !important;
+          gap: 8px !important;
+        }
+        [class*="grid-cols-4"]:not([class*="lg:grid-cols-5"]) {
+          grid-template-columns: 1fr 1fr !important;
+          gap: 8px !important;
+        }
+        [class*="grid-cols-6"]:not([class*="lg:grid-cols-5"]) {
+          grid-template-columns: 1fr 1fr 1fr !important;
+          gap: 8px !important;
+        }
+
+        /* 物料录入表单 (grid-cols-12: 4+3+3+2) → 纵向堆叠 */
         .grid.grid-cols-12 {
           grid-template-columns: 1fr 1fr !important;
           gap: 10px 8px !important;

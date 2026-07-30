@@ -172,28 +172,34 @@
       }
 
       /* ============================================
-         产品信息卡片：移动端精确布局
+         产品基本信息卡片：全平台每项一行
+         SN码 / 产品名称 / 产品型号 / 生产日期 / 检验状态 各占独立一行
          ============================================ */
-      @media (max-width: 639px) {
-        /* 产品基本信息卡片（追溯查看页）：grid-cols-2+lg:grid-cols-5 → 2列 */
-        .grid.grid-cols-2[class*="lg:grid-cols-5"],
-        [class*="grid-cols-2"][class*="lg:grid-cols-5"] {
-          grid-template-columns: 1fr 1fr !important;
-          gap: 10px 16px !important;
-        }
-        /* SN 码（第1个子元素）独占整行 */
-        .grid.grid-cols-2[class*="lg:grid-cols-5"] > div:first-child,
-        [class*="grid-cols-2"][class*="lg:grid-cols-5"] > div:first-child {
-          grid-column: 1 / -1 !important;
-        }
-        /* SN 码文字稍大，保证可读 */
-        .grid.grid-cols-2[class*="lg:grid-cols-5"] > div:first-child .font-mono,
-        [class*="grid-cols-2"][class*="lg:grid-cols-5"] > div:first-child .font-mono {
-          font-size: 13px !important;
-          line-height: 1.6;
-          word-break: break-all;
-        }
+      /* 识别产品基本信息卡：grid-cols-2 + lg:grid-cols-5 组合 → 全平台单列 */
+      .grid.grid-cols-2[class*="lg:grid-cols-5"],
+      [class*="grid-cols-2"][class*="lg:grid-cols-5"] {
+        grid-template-columns: 1fr !important;
+        gap: 8px 0 !important;
+      }
+      /* 每个子元素（SN码/名称/型号/日期/状态）各占一行，标签+值垂直排列清晰 */
+      .grid.grid-cols-2[class*="lg:grid-cols-5"] > div,
+      [class*="grid-cols-2"][class*="lg:grid-cols-5"] > div {
+        padding: 4px 0 !important;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .grid.grid-cols-2[class*="lg:grid-cols-5"] > div:last-child,
+      [class*="grid-cols-2"][class*="lg:grid-cols-5"] > div:last-child {
+        border-bottom: none !important;
+      }
+      /* SN 码文字：等宽字体 + 长码换行 */
+      .grid.grid-cols-2[class*="lg:grid-cols-5"] > div:first-child .font-mono,
+      [class*="grid-cols-2"][class*="lg:grid-cols-5"] > div:first-child .font-mono {
+        font-size: 14px !important;
+        line-height: 1.7;
+        word-break: break-all;
+      }
 
+      @media (max-width: 639px) {
         /* 原材料录入页产品信息卡（grid-cols-3: SN码/名称/型号）→ 移动端单列堆叠 */
         .grid.grid-cols-3:not([class*="lg:grid-cols-5"]):not([class*="sm:"]):not([class*="md:"]),
         [class*="grid-cols-3"]:not([class*="lg:grid-cols-5"]) {

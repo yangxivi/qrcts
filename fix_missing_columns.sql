@@ -49,7 +49,11 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_name='company_info' AND column_name='id' AND data_type='uuid'
   ) THEN
+    -- 先删除旧的 UUID 默认值（gen_random_uuid 无法自动转 bigint）
+    ALTER TABLE public.company_info ALTER COLUMN id DROP DEFAULT;
+    -- 再改类型
     ALTER TABLE public.company_info ALTER COLUMN id TYPE bigint USING 1;
+    -- 最后设新默认值
     ALTER TABLE public.company_info ALTER COLUMN id SET DEFAULT 1;
   END IF;
 END $$;

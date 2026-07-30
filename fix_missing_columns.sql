@@ -99,6 +99,9 @@ ALTER TABLE public.sn_materials
 -- ============================================================
 
 -- 9a. 创建操作工 RPC
+-- 注意：RETURNS TABLE 的输出列名(id/username/display_name/role)与 profiles 表字段同名，
+-- 必须在函数体内用表别名 p 限定列引用，且 allowed_process_ids 为 NOT NULL，
+-- 故传参为 NULL 时用 COALESCE 转成空数组，否则会报 42702 歧义 / 23502 非空约束。
 CREATE OR REPLACE FUNCTION public.create_operator_rpc(
   p_username TEXT,
   p_password TEXT,
@@ -122,14 +125,15 @@ BEGIN
     p_password
   END;
 
-  -- 检查用户名是否已存在
-  IF EXISTS (SELECT 1 FROM public.profiles WHERE username = p_username) THEN
+  -- 检查用户名是否已存在（用别名 p 限定列，避免与输出变量歧义）
+  IF EXISTS (SELECT 1 FROM public.profiles p WHERE p.username = p_username) THEN
     RAISE EXCEPTION '用户名 "%" 已存在', p_username;
   END IF;
 
   INSERT INTO public.profiles (username, password_hash, display_name, role, allowed_process_ids)
-  VALUES (p_username, crypt(v_plain_password, gen_salt('bf')), p_display_name, p_role, p_allowed_process_ids)
-  RETURNING id INTO v_id;
+  VALUES (p_username, crypt(v_plain_password, gen_salt('bf')), p_display_name, p_role, COALESCE(p_allowed_process_ids, ARRAY[]::UUID[]));
+
+  SELECT p.id INTO v_id FROM public.profiles p WHERE p.username = p_username;
 
   RETURN QUERY SELECT v_id, p_username, p_display_name, p_role, v_plain_password;
 END;

@@ -5,15 +5,12 @@
     <link rel="icon" type="image/svg+xml" href="/qrcts/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>二维码溯源系统</title>
-    <script src="/qrcts/env-config.js?v=20260730"></script>
-    <!-- 修复 GitHub Pages 项目子路径：window.location.origin 不含 /qrcts 前缀，
-         导致二维码链接和"查看"链接指向错误路径（404）。
-         在主 JS 加载前拦截 origin，自动补全子路径。 -->
+    <script src="/qrcts/env-config.js?v=20260731"></script>
+    <!-- 修复 GitHub Pages 项目子路径 -->
     <script>
       (function() {
         var BASE = '/qrcts';
         var origOrigin = window.location.origin;
-        // 仅在 GitHub Pages 项目子路径部署时补全（本地开发不干预）
         if (location.pathname.indexOf(BASE) === 0) {
           try {
             Object.defineProperty(window.location, 'origin', {
@@ -24,18 +21,12 @@
         }
       })();
     </script>
-    <!-- 响应式布局适配：手机/平板/桌面端自适应 -->
+    <!-- 响应式布局适配 -->
     <style>
-      /* ============================================
-         全局响应式基础
-         ============================================ */
       html { font-size: 16px; -webkit-text-size-adjust: 100%; }
       body { overflow-x: hidden; }
 
-      /* ============================================
-         侧边栏：小屏隐藏 + 汉堡菜单 + 遮罩层
-         ============================================ */
-      /* 侧边栏默认在移动端隐藏 */
+      /* ===== 侧边栏：小屏抽屉 ===== */
       @media (max-width: 767px) {
         .flex.h-screen > aside.w-60 {
           position: fixed !important;
@@ -50,14 +41,17 @@
           left: 0 !important;
           box-shadow: 4px 0 20px rgba(0,0,0,0.3);
         }
-        /* 主内容区占满宽度 */
         .flex.h-screen > main,
         .flex.h-screen > div:not(aside) {
           width: 100% !important;
         }
+        /* 只有有侧边栏的页面才给 main 留汉堡按钮空间 */
+        .flex.h-screen > main {
+          padding-left: 52px !important;
+        }
       }
 
-      /* 汉堡按钮 - 由 JS 动态注入 */
+      /* ===== 汉堡按钮（JS 动态控制显示） ===== */
       .mobile-menu-btn {
         display: none;
         position: fixed;
@@ -88,18 +82,10 @@
       .mobile-menu-btn.active span:nth-child(1) {
         transform: rotate(45deg) translate(5px, 5px);
       }
-      .mobile-menu-btn.active span:nth-child(2) {
-        opacity: 0;
-      }
+      .mobile-menu-btn.active span:nth-child(2) { opacity: 0; }
       .mobile-menu-btn.active span:nth-child(3) {
         transform: rotate(-45deg) translate(5px, -5px);
       }
-
-      @media (max-width: 767px) {
-        .mobile-menu-btn { display: flex; }
-      }
-
-      /* 遮罩层 */
       .sidebar-overlay {
         display: none;
         position: fixed;
@@ -109,35 +95,22 @@
       }
       .sidebar-overlay.active { display: block; }
 
-      /* ============================================
-         表格：小屏横向滚动 + 列宽优化
-         ============================================ */
+      /* ===== 表格横向滚动 ===== */
       .card.overflow-hidden {
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch;
       }
-      /* 原材料展示页的表格（使用 overflow-x-auto 包裹） */
-      .overflow-x-auto > table.table {
-        min-width: 480px;
-        width: 100%;
-      }
-      .card.overflow-hidden > table.table {
-        min-width: 600px;   /* 保证表格最小可读宽度 */
-        width: 100%;
-      }
+      .overflow-x-auto > table.table { min-width: 480px; width: 100%; }
+      .card.overflow-hidden > table.table { min-width: 600px; width: 100%; }
       @media (max-width: 767px) {
         .card.overflow-hidden {
-          border-radius: 10px;
           margin: 0 -12px;
           padding: 0 12px;
           border-left: none;
           border-right: none;
           border-radius: 0;
         }
-        .card.overflow-hidden > table.table {
-          min-width: 500px;
-        }
-        /* 表格单元格内边距缩小 */
+        .card.overflow-hidden > table.table { min-width: 500px; }
         .card.overflow-hidden th,
         .card.overflow-hidden td {
           padding: 8px 10px !important;
@@ -149,67 +122,53 @@
         }
       }
 
-      /* ============================================
-         卡片 & 容器：移动端间距优化
-         ============================================ */
+      /* ===== 卡片间距 ===== */
       @media (max-width: 767px) {
-        /* 卡片内边距 */
         .card { padding: 14px !important; border-radius: 10px !important; }
         .p-6 { padding: 14px !important; }
         .p-5 { padding: 12px !important; }
         .p-4 { padding: 10px !important; }
-
-        /* 主内容区内边距 */
         .overflow-y-auto.p-6 { padding: 12px !important; }
         .overflow-auto.bg-gray-200.p-6 { padding: 10px !important; }
-
-        /* 页面标题区域 */
         h1.text-2xl, h2.text-2xl { font-size: 1.25rem !important; }
         h1.text-xl, h2.text-xl { font-size: 1.15rem !important; }
-
-        /* 按钮尺寸微调 */
         button { min-height: 38px; }
       }
 
-      /* ============================================
-         产品基本信息卡片：全平台每项一行（JS 强制方案）
-         SN码 / 产品名称 / 产品型号 / 生产日期 / 检验状态 各占独立一行
-         ============================================ */
-      /* JS 注入的 .product-info-single-col 类 */
-      .product-info-single-col {
+      /* ===== 产品基本信息卡片：全平台每项一行 =====
+         真实 DOM 类名: grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4
+         5 个子元素: SN码 / 产品名称 / 产品型号 / 生产日期 / 检验状态 */
+      .grid.grid-cols-2[class*="sm:grid-cols-3"][class*="lg:grid-cols-5"] {
         grid-template-columns: 1fr !important;
-        gap: 8px 0 !important;
+        gap: 6px 0 !important;
       }
-      .product-info-single-col > div {
-        padding: 4px 0 !important;
+      .grid.grid-cols-2[class*="sm:grid-cols-3"][class*="lg:grid-cols-5"] > div {
+        padding: 5px 0 !important;
         border-bottom: 1px solid #f1f5f9;
       }
-      .product-info-single-col > div:last-child {
+      .grid.grid-cols-2[class*="sm:grid-cols-3"][class*="lg:grid-cols-5"] > div:last-child {
         border-bottom: none !important;
       }
-      .product-info-single-col > div:first-child .font-mono {
+      .grid.grid-cols-2[class*="sm:grid-cols-3"][class*="lg:grid-cols-5"] > div:first-child .font-mono {
         font-size: 14px !important;
-        line-height: 1.7;
+        line-height: 1.6;
         word-break: break-all;
       }
 
+      /* ===== 原材料录入页产品信息卡: 移动端单列 =====
+         真实 DOM 类名: grid grid-cols-3 gap-4 text-sm */
       @media (max-width: 639px) {
-        /* 原材料录入页产品信息卡（grid-cols-3: SN码/名称/型号）→ 移动端单列堆叠 */
-        .grid.grid-cols-3:not([class*="lg:grid-cols-5"]):not([class*="sm:"]):not([class*="md:"]),
-        [class*="grid-cols-3"]:not([class*="lg:grid-cols-5"]) {
+        .grid.grid-cols-3.gap-4.text-sm {
           grid-template-columns: 1fr !important;
           gap: 6px !important;
-        }
-        /* 该卡片内文字缩小 */
-        .grid.grid-cols-3:not([class*="lg:grid-cols-5"]) {
           font-size: 13px !important;
         }
-        .grid.grid-cols-3:not([class*="lg:grid-cols-5"]) .font-mono {
+        .grid.grid-cols-3.gap-4.text-sm .font-mono {
           font-size: 12px !important;
           word-break: break-all;
           line-height: 1.5;
         }
-        .grid.grid-cols-3:not([class*="lg:grid-cols-5"]) p[class*="text-gray"] {
+        .grid.grid-cols-3.gap-4.text-sm p[class*="text-gray"] {
           font-size: 11px !important;
         }
         [class*="grid-cols-4"]:not([class*="lg:grid-cols-5"]) {
@@ -220,50 +179,38 @@
           grid-template-columns: 1fr 1fr 1fr !important;
           gap: 8px !important;
         }
-
-        /* 物料录入表单 (grid-cols-12: 4+3+3+2) → 纵向堆叠 */
+        /* 物料录入表单 (grid-cols-12) */
         .grid.grid-cols-12 {
           grid-template-columns: 1fr 1fr !important;
           gap: 10px 8px !important;
         }
-        .grid.grid-cols-12 > div {
-          min-width: 0 !important;
-        }
+        .grid.grid-cols-12 > div { min-width: 0 !important; }
         .grid.grid-cols-12 .col-span-4,
         .grid.grid-cols-12 .col-span-3,
         .grid.grid-cols-12 .col-span-2 {
           grid-column: span 1 !important;
         }
-        /* 删除按钮单独一行靠右 */
         .grid.grid-cols-12 > div:last-child {
           display: flex;
           justify-content: flex-end;
           padding-top: 4px;
         }
       }
-
       @media (max-width: 479px) {
-        /* 超小屏：物料录入每行只放一个字段 */
-        .grid.grid-cols-12 {
-          grid-template-columns: 1fr !important;
-        }
+        .grid.grid-cols-12 { grid-template-columns: 1fr !important; }
       }
 
-      /* ============================================
-         SN 码显示：长码换行不溢出
-         ============================================ */
+      /* ===== SN 码显示 ===== */
       .font-mono.text-sm.font-medium.mt-1.break-all {
         word-break: break-all;
         font-size: 12px !important;
         line-height: 1.5;
       }
       @media (max-width: 767px) {
-        .font-mono { font-size: 11px !important; word-break: break-all; }
+        .font-mono { font-size: 12px !important; word-break: break-all; }
       }
 
-      /* ============================================
-         表单输入框：移动端全宽
-         ============================================ */
+      /* ===== 表单输入框 ===== */
       @media (max-width: 767px) {
         input[type="text"],
         input[type="password"],
@@ -271,10 +218,9 @@
         input[type="number"],
         select,
         textarea {
-          font-size: 16px !important;  /* iOS 防止自动缩放 */
+          font-size: 16px !important;
           min-height: 42px;
         }
-        /* 弹窗/模态框 */
         [class*="modal"],
         [role="dialog"] {
           max-width: calc(100vw - 24px) !important;
@@ -284,23 +230,15 @@
         }
       }
 
-      /* ============================================
-         操作按钮组：移动端可换行
-         ============================================ */
+      /* ===== 按钮组 ===== */
       @media (max-width: 480px) {
         .flex.items-center.gap-3,
-        .flex.items-center.gap-2 {
-          flex-wrap: wrap;
-        }
-        /* 头部操作栏 */
+        .flex.items-center.gap-2 { flex-wrap: wrap; }
         .justify-between.flex-wrap { flex-wrap: wrap; }
       }
 
-      /* ============================================
-         物料录入表格特殊处理
-         ============================================ */
+      /* ===== 物料录入表格 ===== */
       @media (max-width: 639px) {
-        /* 物料表格的输入框不要太大 */
         .card input[type="text"],
         .card input[type="number"] {
           min-height: 36px;
@@ -309,62 +247,22 @@
         }
       }
 
-      /* ============================================
-         登录页：移动端居中优化
-         ============================================ */
+      /* ===== 登录页 ===== */
       @media (max-width: 480px) {
-        .min-h-screen.flex.items-center.justify-center {
-          padding: 16px !important;
-        }
-        .w-full.max-w-md {
-          max-width: 100% !important;
-        }
+        .min-h-screen.flex.items-center.justify-center { padding: 16px !important; }
+        .w-full.max-w-md { max-width: 100% !important; }
       }
 
-      /* ============================================
-         二维码展示页面
-         ============================================ */
+      /* ===== 二维码展示页面 ===== */
       @media (max-width: 767px) {
-        .flex-1.overflow-auto.bg-gray-200 {
-          padding: 8px !important;
-        }
+        .flex-1.overflow-auto.bg-gray-200 { padding: 8px !important; }
         .bg-white.shadow-lg[style*="width"] {
           max-width: 100% !important;
           height: auto !important;
         }
       }
 
-      /* ============================================
-         顶部导航条（返回按钮等）
-         ============================================ */
-      @media (max-width: 767px) {
-        /* 给汉堡按钮留出空间 */
-        .flex.h-screen > *:not(aside) {
-          padding-left: 56px !important;  /* 为汉堡按钮留空间 */
-        }
-        .flex.h-screen {
-          padding-top: 0 !important;
-        }
-      }
-
-      /* ============================================
-         通用工具类补充
-         ============================================ */
-      .responsive-hide-mobile { display: block; }
-      .responsive-show-mobile { display: none; }
-      @media (max-width: 767px) {
-        .responsive-hide-mobile { display: none !important; }
-        .responsive-show-mobile { display: block !important; }
-      }
-
-      /* 文字截断辅助 */
-      .text-truncate {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      /* 平板端微调 (768px - 1024px) */
+      /* ===== 平板端 ===== */
       @media (min-width: 768px) and (max-width: 1023px) {
         .card { padding: 16px !important; }
         .p-6 { padding: 18px !important; }
@@ -375,19 +273,17 @@
   </head>
   <body>
     <div id="root"></div>
-    <!-- 移动端侧边栏控制脚本 -->
     <script>
       (function() {
+        /* ===== 汉堡按钮 + 侧边栏 ===== */
         var btn = document.createElement('button');
         btn.className = 'mobile-menu-btn';
-        btn.id = 'mobile-menu-toggle';
         btn.innerHTML = '<span></span><span></span><span></span>';
         btn.setAttribute('aria-label', '打开菜单');
         document.body.appendChild(btn);
 
         var overlay = document.createElement('div');
         overlay.className = 'sidebar-overlay';
-        overlay.id = 'sidebar-overlay';
         document.body.appendChild(overlay);
 
         function toggleSidebar(e) {
@@ -400,10 +296,8 @@
           btn.setAttribute('aria-label', isOpen ? '关闭菜单' : '打开菜单');
           document.body.style.overflow = isOpen ? 'hidden' : '';
         }
-
         btn.addEventListener('click', toggleSidebar);
         overlay.addEventListener('click', toggleSidebar);
-
         document.addEventListener('keydown', function(e) {
           if (e.key === 'Escape') {
             var aside = document.querySelector('aside.w-60.sidebar-open');
@@ -411,89 +305,84 @@
           }
         });
 
-        var pushState = history.pushState;
-        history.pushState = function() {
-          pushState.apply(this, arguments);
-          var aside = document.querySelector('aside.w-60.sidebar-open');
-          if (aside) toggleSidebar();
-        };
-      })();
-    </script>
-    <!-- 产品基本信息卡片：强制全平台单列布局 -->
-    <script>
-      (function() {
-        var processed = new WeakSet();
-
-        function isProductInfoGrid(el) {
-          if (!el || el.children.length < 4) return false;
-          var cs = getComputedStyle(el);
-          if (cs.display !== 'grid') return false;
-
-          if (el.children.length === 5) {
-            var labels = el.querySelectorAll('p, span, small, div');
-            for (var i = 0; i < Math.min(labels.length, 10); i++) {
-              var t = labels[i].textContent.trim();
-              if (t === 'SN 码' || t === 'SN码' || t === '产品名称' ||
-                  t === '产品型号' || t === '生产日期' || t === '检验状态' ||
-                  t === '产品状态') return true;
-            }
-            var gtc = cs.gridTemplateColumns;
-            if (gtc && gtc.indexOf('5') !== -1 && gtc.indexOf('1fr') !== -1) return true;
-          }
-
-          var parent = el.parentElement;
-          if (parent) {
-            var h = parent.querySelector('h1,h2,h3,h4,[class*="title"],[class*="heading"]');
-            if (h && h.textContent.indexOf('产品基本') !== -1) return true;
-            var gp = parent.parentElement;
-            if (gp) {
-              var h2 = gp.querySelector('h1,h2,h3,h4,[class*="title"],[class*="heading"]');
-              if (h2 && h2.textContent.indexOf('产品基本') !== -1) return true;
-            }
-          }
-
-          if (el.children.length >= 4 && el.children.length <= 6) {
-            if (el.querySelector('.font-mono')) return true;
-          }
-
-          return false;
-        }
-
-        function applySingleCol(gridEl) {
-          if (processed.has(gridEl)) return;
-          processed.add(gridEl);
-          gridEl.classList.add('product-info-single-col');
-        }
-
-        function scanAll() {
-          var all = document.querySelectorAll('[class*="grid"], [style*="grid"]');
-          for (var i = 0; i < all.length; i++) {
-            if (isProductInfoGrid(all[i])) applySingleCol(all[i]);
-          }
-        }
-
-        scanAll();
-        setTimeout(scanAll, 200);
-        setTimeout(scanAll, 800);
-        setTimeout(scanAll, 2000);
-
-        var observer = new MutationObserver(function(mutations) {
-          for (var i = 0; i < mutations.length; i++) {
-            var m = mutations[i];
-            if (m.addedNodes.length > 0) {
-              for (var j = 0; j < m.addedNodes.length; j++) {
-                if (m.addedNodes[j].nodeType === 1) { setTimeout(scanAll, 50); return; }
+        /* ===== 产品信息卡 inline style 双保险 =====
+           CSS 选择器已能匹配，但 React 重新渲染时可能覆盖 class，
+           这里用 inline style 确保万无一失 */
+        function forceProductGridSingleCol() {
+          /* 产品基本信息卡: grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 */
+          var grids = document.querySelectorAll('.grid.grid-cols-2');
+          for (var i = 0; i < grids.length; i++) {
+            var el = grids[i];
+            var cls = el.className || '';
+            if (cls.indexOf('lg:grid-cols-5') !== -1 && cls.indexOf('sm:grid-cols-3') !== -1) {
+              if (el.style.getPropertyValue('grid-template-columns') !== '1fr') {
+                el.style.setProperty('grid-template-columns', '1fr', 'important');
+                el.style.setProperty('gap', '6px 0', 'important');
+              }
+              var kids = el.children;
+              for (var k = 0; k < kids.length; k++) {
+                kids[k].style.setProperty('padding', '5px 0', 'important');
+                kids[k].style.setProperty('border-bottom', k < kids.length - 1 ? '1px solid #f1f5f9' : 'none', 'important');
               }
             }
           }
+        }
+
+        /* ===== 路由变化时：关闭侧边栏 + 重新强制单列 ===== */
+        var origPushState = history.pushState;
+        history.pushState = function() {
+          origPushState.apply(this, arguments);
+          var aside = document.querySelector('aside.w-60.sidebar-open');
+          if (aside) toggleSidebar();
+          setTimeout(forceProductGridSingleCol, 100);
+          setTimeout(forceProductGridSingleCol, 500);
+        };
+        var origReplaceState = history.replaceState;
+        history.replaceState = function() {
+          origReplaceState.apply(this, arguments);
+          setTimeout(forceProductGridSingleCol, 100);
+        };
+        window.addEventListener('popstate', function() {
+          setTimeout(forceProductGridSingleCol, 100);
+        });
+
+        /* ===== MutationObserver: 动态检测侧边栏 + 产品信息卡 ===== */
+        var observer = new MutationObserver(function() {
+          /* 只有有侧边栏的页面才显示汉堡按钮（移动端） */
+          var aside = document.querySelector('aside.w-60');
+          if (window.innerWidth <= 767) {
+            btn.style.display = aside ? 'flex' : 'none';
+          } else {
+            btn.style.display = 'none';
+          }
+          /* 如果侧边栏不存在但按钮是 active 状态，重置 */
+          if (!aside && btn.classList.contains('active')) {
+            btn.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+          }
+          /* 强制产品信息卡单列 */
+          forceProductGridSingleCol();
         });
         observer.observe(document.body, { childList: true, subtree: true });
 
-        var origPushState = history.pushState;
-        history.pushState = function() { origPushState.apply(this, arguments); setTimeout(scanAll, 300); };
-        var origReplaceState = history.replaceState;
-        history.replaceState = function() { origReplaceState.apply(this, arguments); setTimeout(scanAll, 300); };
-        window.addEventListener('popstate', function() { setTimeout(scanAll, 300); });
+        /* 初始执行 */
+        forceProductGridSingleCol();
+        setTimeout(forceProductGridSingleCol, 200);
+        setTimeout(forceProductGridSingleCol, 800);
+        setTimeout(forceProductGridSingleCol, 2000);
+        setTimeout(forceProductGridSingleCol, 4000);
+
+        /* 窗口大小变化时重新检测 */
+        window.addEventListener('resize', function() {
+          var aside = document.querySelector('aside.w-60');
+          if (window.innerWidth <= 767) {
+            btn.style.display = aside ? 'flex' : 'none';
+          } else {
+            btn.style.display = 'none';
+          }
+          forceProductGridSingleCol();
+        });
       })();
     </script>
   </body>

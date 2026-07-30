@@ -5,7 +5,25 @@
     <link rel="icon" type="image/svg+xml" href="/qrcts/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>二维码溯源系统</title>
-    <script src="/qrcts/env-config.js?v=20260729"></script>
+    <script src="/qrcts/env-config.js?v=20260730"></script>
+    <!-- 修复 GitHub Pages 项目子路径：window.location.origin 不含 /qrcts 前缀，
+         导致二维码链接和"查看"链接指向错误路径（404）。
+         在主 JS 加载前拦截 origin，自动补全子路径。 -->
+    <script>
+      (function() {
+        var BASE = '/qrcts';
+        var origOrigin = window.location.origin;
+        // 仅在 GitHub Pages 项目子路径部署时补全（本地开发不干预）
+        if (location.pathname.indexOf(BASE) === 0) {
+          try {
+            Object.defineProperty(window.location, 'origin', {
+              get: function() { return origOrigin + BASE; },
+              configurable: true
+            });
+          } catch(e) {}
+        }
+      })();
+    </script>
     <script type="module" crossorigin src="/qrcts/assets/index-muZMgV9K.js"></script>
     <link rel="stylesheet" crossorigin href="/qrcts/assets/index-CMqRsil8.css">
   </head>

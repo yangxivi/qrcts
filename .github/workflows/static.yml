@@ -17,8 +17,9 @@ permissions:
 
 # Allow only one concurrent deployment and cancel any in-progress runs
 # so that only the latest commit is ever deployed to GitHub Pages.
+# NOTE: 临时改用 pages-redeploy 组以绕过被卡死的 pages 并发锁（run 43 长期 waiting）。
 concurrency:
-  group: "pages"
+  group: "pages-redeploy"
   cancel-in-progress: true
 
 jobs:

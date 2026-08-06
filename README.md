@@ -24,9 +24,9 @@
 
 ## 在线访问
 
-系统已部署到 GitHub Pages：
+系统已部署到 GitHub Pages，使用自定义域名：
 
-👉 **https://yangxivi.github.io/qrcts/**
+👉 **https://qr.xiviai.cn/**
 
 > 首次使用请联系系统管理员创建账号。管理员可在「操作工管理」中创建账号并直接设置初始密码，也可随时重置密码。
 
@@ -35,13 +35,14 @@
 - **前端**：React + React Router（构建产物部署，无独立源码仓库）
 - **后端**：Supabase（PostgreSQL + RPC 函数）
 - **认证**：纯数据库账号密码系统（pgcrypto `crypt` / `gen_salt` 加密）
-- **部署**：GitHub Pages + GitHub Actions
+- **部署**：GitHub Pages + GitHub Actions（自定义域名 qr.xiviai.cn）
 
 ## 目录结构
 
 ```
 ├── assets/                  # 前端构建产物（JS/CSS）
 ├── .github/workflows/       # GitHub Actions 自动部署配置
+├── CNAME                    # 自定义域名配置（qr.xiviai.cn）
 ├── index.html               # 应用入口
 ├── 404.html                 # SPA 路由回退页面
 ├── _redirects               # 静态托管重定向规则
@@ -65,9 +66,19 @@
 
 ## 部署说明
 
-推送到 `main` 分支后，GitHub Actions 会自动构建并部署到 GitHub Pages 子路径 `/qrcts/`。部署完成后建议强制刷新（Ctrl + Shift + R）以清除 CDN 缓存。
+推送到 `main` 分支后，GitHub Actions 会自动构建并部署到 GitHub Pages。站点使用自定义域名 `qr.xiviai.cn`，资源路径为根路径 `/`。部署完成后建议强制刷新（Ctrl + Shift + R）以清除 CDN 缓存。
 
-> 站点部署在项目子路径下，所有资源与路由均已配置 `/qrcts` 前缀；自定义路由经由 `404.html` / `_redirects` 回退到 SPA 入口。
+> 使用自定义域名后，所有资源与路由均使用根路径 `/`，无需子路径前缀。自定义路由经由 `404.html` / `_redirects` 回退到 SPA 入口。
+
+## DNS 配置
+
+使用自定义域名需在域名服务商处添加以下 DNS 记录：
+
+| 类型 | 主机记录 | 记录值 |
+|------|---------|--------|
+| CNAME | qr | yangxivi.github.io |
+
+配置完成后，在 GitHub 仓库 Settings → Pages → Custom domain 中确认域名已启用，并建议勾选 "Enforce HTTPS"。
 
 ## 许可证
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-v="43">
+<html lang="zh-CN" data-v="44">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
@@ -11,7 +11,7 @@
     <!-- 版本自检：无需手动清缓存，检测到旧版自动刷新拿新版；页面常开也每 30s 轮询 -->
     <script>
       (function() {
-        var V = '43';
+        var V = '44';
         var checked = false;
         function checkNew() {
           try {
@@ -48,14 +48,14 @@
         });
       })();
     </script>
-    <script src="/env-config.js?v=43" defer></script>
+    <script src="/env-config.js?v=44" defer></script>
     <!-- 提前建立连接，缩短首屏等待 -->
     <link rel="preconnect" href="https://ikdpglqstdyqwiiitfmz.supabase.co" crossorigin>
     <link rel="dns-prefetch" href="https://ikdpglqstdywiiitfmz.supabase.co">
-    <link rel="preload" as="style" crossorigin href="/assets/index-v43-CMqRsil8.css?v=43">
+    <link rel="preload" as="style" crossorigin href="/assets/index-v44-CMqRsil8.css?v=44">
     <!-- Tailwind CSS 先加载 -->
-    <link rel="stylesheet" crossorigin href="/assets/index-v43-CMqRsil8.css?v=43">
-    <link rel="preload" as="script" crossorigin href="/assets/index-v43-muZMgV9K.js?v=43">
+    <link rel="stylesheet" crossorigin href="/assets/index-v44-CMqRsil8.css?v=44">
+    <link rel="preload" as="script" crossorigin href="/assets/index-v44-muZMgV9K.js?v=44">
     <!-- 响应式覆盖 CSS 后加载（确保优先级） -->
     <style>
       html { font-size: 16px; -webkit-text-size-adjust: 100%; }
@@ -66,28 +66,6 @@
       /* 原材料录入表单：每字段独占一行，输入框拉长 */
       .grid.grid-cols-1.gap-4 .select,
       .grid.grid-cols-1.gap-4 .input { width: 100% !important; }
-      /* 操作工退出按钮（注入到 /t/ 页面右上角，必须一眼可见） */
-      #qrcts-logout-host {
-        position: fixed !important;
-        top: 10px !important;
-        right: 10px !important;
-        z-index: 999999 !important;
-        pointer-events: none !important;
-      }
-      #qrcts-logout-btn {
-        white-space: nowrap !important;
-        pointer-events: auto !important;
-        background: #dc2626 !important;
-        color: #fff !important;
-        border: 2px solid #fff !important;
-        border-radius: 8px !important;
-        padding: 8px 14px !important;
-        font-size: 15px !important;
-        font-weight: 700 !important;
-        line-height: 1.2 !important;
-        cursor: pointer !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.35) !important;
-      }
 
       /* ===== 侧边栏：小屏抽屉 ===== */
       @media (max-width: 767px) {
@@ -355,7 +333,7 @@
         .p-6 { padding: 18px !important; }
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-v43-muZMgV9K.js?v=43"></script>
+    <script type="module" crossorigin src="/assets/index-v44-muZMgV9K.js?v=44"></script>
   </head>
   <body>
     <div id="root"></div>
@@ -471,39 +449,29 @@
           }
         }
 
-        /* ===== 操作工退出登录按钮（注入到 /t/ 页面头部） =====
-           操作工登录后无退出入口，这里在追溯/工序填写/原材料录入页头部注入"退出"按钮，
-           点击即清除本地登录态并跳回登录页，可切换账号。 */
+        /* ===== 退出登录 =====
+           产品信息卡页头的"登录后台 / 退出登录"按钮由 bundle 原生渲染（v44 起），
+           点击退出时调用 window.__qrctsLogout。
+           工序填写页 / 原材料录入页（页头含"返回追溯页"）没有原生退出按钮，
+           这里在已登录时给这些页头注入一个"退出登录"按钮。 */
         window.__qrctsLogout = function() {
           try { localStorage.removeItem('qrcts_user_id'); } catch (e) {}
           window.location.href = '/login';
         };
         function injectLogout() {
-          // 仅在登录页不显示退出按钮（含 hash 路由 /#/login 与 /login 两种形态）
-          var path = (location.pathname || '') + (location.hash || '');
-          if (path.indexOf('login') !== -1) {
-            var ex = document.getElementById('qrcts-logout-host');
-            if (ex && ex.parentNode) ex.parentNode.removeChild(ex);
-            return;
-          }
-          // 固定右上角红色退出按钮：所有已登录页面均显示，确保手机端一定能点到
-          var host = document.getElementById('qrcts-logout-host');
-          if (!host) {
-            host = document.createElement('div');
-            host.id = 'qrcts-logout-host';
-            document.body.appendChild(host);
-            var btn = document.createElement('button');
-            btn.id = 'qrcts-logout-btn';
-            btn.type = 'button';
-            btn.textContent = '退出登录';
-            btn.addEventListener('click', window.__qrctsLogout);
-            host.appendChild(btn);
-          }
-          // 同时尝试注入到页头内，与原生布局融为一体
+          var loggedIn = false;
+          try { loggedIn = !!localStorage.getItem('qrcts_user_id'); } catch (e) {}
           var headers = document.querySelectorAll('header.bg-primary-950');
           for (var h = 0; h < headers.length; h++) {
             var header = headers[h];
-            if (header.querySelector('#qrcts-logout-header-btn')) continue;
+            // 只处理"返回追溯页"类页头（工序填写/原材料录入），产品信息卡页头由 bundle 负责
+            if ((header.textContent || '').indexOf('返回追溯页') === -1) continue;
+            var exist = header.querySelector('#qrcts-logout-header-btn');
+            if (!loggedIn) {
+              if (exist && exist.parentNode) exist.parentNode.removeChild(exist);
+              continue;
+            }
+            if (exist) continue;
             var flex = header.querySelector('.max-w-4xl.mx-auto.flex.items-center.justify-between') ||
                        header.querySelector('.max-w-3xl.mx-auto.flex.items-center.justify-between') ||
                        header.querySelector('.flex.items-center.justify-between');
@@ -513,7 +481,7 @@
             hbtn.type = 'button';
             hbtn.textContent = '退出登录';
             hbtn.addEventListener('click', window.__qrctsLogout);
-            hbtn.style.cssText = 'margin-left:auto;background:rgba(255,255,255,.18);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;line-height:1.4;';
+            hbtn.style.cssText = 'background:rgba(255,255,255,.18);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;line-height:1.4;white-space:nowrap;';
             flex.appendChild(hbtn);
           }
         }

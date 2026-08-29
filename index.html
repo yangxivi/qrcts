@@ -8,9 +8,9 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>二维码溯源系统</title>
-    <script src="/env-config.js?v=39"></script>
+    <script src="/env-config.js?v=40"></script>
     <!-- Tailwind CSS 先加载 -->
-    <link rel="stylesheet" crossorigin href="/assets/index-CMqRsil8.css?v=39">
+    <link rel="stylesheet" crossorigin href="/assets/index-CMqRsil8.css?v=40">
     <!-- 响应式覆盖 CSS 后加载（确保优先级） -->
     <style>
       html { font-size: 16px; -webkit-text-size-adjust: 100%; }
@@ -278,7 +278,7 @@
         .p-6 { padding: 18px !important; }
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-muZMgV9K.js?v=39"></script>
+    <script type="module" crossorigin src="/assets/index-muZMgV9K.js?v=40"></script>
   </head>
   <body>
     <div id="root"></div>
@@ -394,23 +394,41 @@
         };
         function injectLogout() {
           if (!location.pathname.startsWith('/t/')) {
-            var ex = document.getElementById('qrcts-logout-btn');
+            var ex = document.getElementById('qrcts-logout-host');
             if (ex && ex.parentNode) ex.parentNode.removeChild(ex);
             return;
           }
-          var headers = document.querySelectorAll('header.bg-primary-950');
-          for (var h = 0; h < headers.length; h++) {
-            var header = headers[h];
-            var flex = header.querySelector('.max-w-4xl.mx-auto.flex.items-center.justify-between') ||
-                       header.querySelector('.flex.items-center.justify-between');
-            if (!flex || flex.querySelector('#qrcts-logout-btn')) continue;
+          // 兜底：固定右上角退出按钮，确保手机端一定能点到
+          var host = document.getElementById('qrcts-logout-host');
+          if (!host) {
+            host = document.createElement('div');
+            host.id = 'qrcts-logout-host';
+            host.style.cssText = 'position:fixed;top:12px;right:12px;z-index:10001;pointer-events:none;';
             var btn = document.createElement('button');
             btn.id = 'qrcts-logout-btn';
             btn.type = 'button';
             btn.textContent = '退出';
+            btn.style.cssText = 'pointer-events:auto;background:rgba(255,255,255,0.95);color:#1e3a8a;border:none;border-radius:6px;padding:6px 10px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.2);line-height:1.4;';
             btn.addEventListener('click', window.__qrctsLogout);
-            btn.style.cssText = 'margin-left:auto;background:rgba(255,255,255,.18);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;line-height:1.4;';
-            flex.appendChild(btn);
+            host.appendChild(btn);
+            document.body.appendChild(host);
+          }
+          // 同时尝试注入到页头内，与原生布局融为一体
+          var headers = document.querySelectorAll('header.bg-primary-950');
+          for (var h = 0; h < headers.length; h++) {
+            var header = headers[h];
+            if (header.querySelector('#qrcts-logout-header-btn')) continue;
+            var flex = header.querySelector('.max-w-4xl.mx-auto.flex.items-center.justify-between') ||
+                       header.querySelector('.max-w-3xl.mx-auto.flex.items-center.justify-between') ||
+                       header.querySelector('.flex.items-center.justify-between');
+            if (!flex) continue;
+            var hbtn = document.createElement('button');
+            hbtn.id = 'qrcts-logout-header-btn';
+            hbtn.type = 'button';
+            hbtn.textContent = '退出';
+            hbtn.addEventListener('click', window.__qrctsLogout);
+            hbtn.style.cssText = 'margin-left:auto;background:rgba(255,255,255,.18);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;line-height:1.4;';
+            flex.appendChild(hbtn);
           }
         }
 

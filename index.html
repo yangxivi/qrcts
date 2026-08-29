@@ -8,13 +8,21 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>二维码溯源系统</title>
-    <script src="/env-config.js?v=38"></script>
+    <script src="/env-config.js?v=39"></script>
     <!-- Tailwind CSS 先加载 -->
-    <link rel="stylesheet" crossorigin href="/assets/index-CMqRsil8.css?v=38">
+    <link rel="stylesheet" crossorigin href="/assets/index-CMqRsil8.css?v=39">
     <!-- 响应式覆盖 CSS 后加载（确保优先级） -->
     <style>
       html { font-size: 16px; -webkit-text-size-adjust: 100%; }
       body { overflow-x: hidden; }
+
+      /* ===== 单列卡片安全网（JS 已改 grid-cols-1 的后备；确保子项全宽、行距舒适） ===== */
+      .grid.grid-cols-1.gap-4 > div { width: 100% !important; box-sizing: border-box; }
+      /* 原材料录入表单：每字段独占一行，输入框拉长 */
+      .grid.grid-cols-1.gap-4 .select,
+      .grid.grid-cols-1.gap-4 .input { width: 100% !important; }
+      /* 操作工退出按钮（注入到 /t/ 页头） */
+      #qrcts-logout-btn { white-space: nowrap; }
 
       /* ===== 侧边栏：小屏抽屉 ===== */
       @media (max-width: 767px) {
@@ -270,7 +278,7 @@
         .p-6 { padding: 18px !important; }
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-muZMgV9K.js?v=38"></script>
+    <script type="module" crossorigin src="/assets/index-muZMgV9K.js?v=39"></script>
   </head>
   <body>
     <div id="root"></div>
@@ -377,6 +385,35 @@
           }
         }
 
+        /* ===== 操作工退出登录按钮（注入到 /t/ 页面头部） =====
+           操作工登录后无退出入口，这里在追溯/工序填写/原材料录入页头部注入"退出"按钮，
+           点击即清除本地登录态并跳回登录页，可切换账号。 */
+        window.__qrctsLogout = function() {
+          try { localStorage.removeItem('qrcts_user_id'); } catch (e) {}
+          window.location.href = '/login';
+        };
+        function injectLogout() {
+          if (!location.pathname.startsWith('/t/')) {
+            var ex = document.getElementById('qrcts-logout-btn');
+            if (ex && ex.parentNode) ex.parentNode.removeChild(ex);
+            return;
+          }
+          var headers = document.querySelectorAll('header.bg-primary-950');
+          for (var h = 0; h < headers.length; h++) {
+            var header = headers[h];
+            var flex = header.querySelector('.max-w-4xl.mx-auto.flex.items-center.justify-between') ||
+                       header.querySelector('.flex.items-center.justify-between');
+            if (!flex || flex.querySelector('#qrcts-logout-btn')) continue;
+            var btn = document.createElement('button');
+            btn.id = 'qrcts-logout-btn';
+            btn.type = 'button';
+            btn.textContent = '退出';
+            btn.addEventListener('click', window.__qrctsLogout);
+            btn.style.cssText = 'margin-left:auto;background:rgba(255,255,255,.18);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;line-height:1.4;';
+            flex.appendChild(btn);
+          }
+        }
+
         /* ===== 路由变化处理 ===== */
         var origPushState = history.pushState;
         history.pushState = function() {
@@ -386,16 +423,23 @@
           setTimeout(forceSingleCol, 50);
           setTimeout(forceSingleCol, 200);
           setTimeout(forceSingleCol, 600);
+          setTimeout(injectLogout, 50);
+          setTimeout(injectLogout, 200);
+          setTimeout(injectLogout, 600);
         };
         var origReplaceState = history.replaceState;
         history.replaceState = function() {
           origReplaceState.apply(this, arguments);
           setTimeout(forceSingleCol, 50);
           setTimeout(forceSingleCol, 200);
+          setTimeout(injectLogout, 50);
+          setTimeout(injectLogout, 200);
         };
         window.addEventListener('popstate', function() {
           setTimeout(forceSingleCol, 50);
           setTimeout(forceSingleCol, 200);
+          setTimeout(injectLogout, 50);
+          setTimeout(injectLogout, 200);
         });
 
         /* ===== MutationObserver ===== */
@@ -414,6 +458,7 @@
           }
           if (moTimer) clearTimeout(moTimer);
           moTimer = setTimeout(forceSingleCol, 30);
+          setTimeout(injectLogout, 30);
         });
         observer.observe(document.body, { childList: true, subtree: true });
 
@@ -423,6 +468,12 @@
         setTimeout(forceSingleCol, 800);
         setTimeout(forceSingleCol, 1500);
         setTimeout(forceSingleCol, 3000);
+        injectLogout();
+        setTimeout(injectLogout, 100);
+        setTimeout(injectLogout, 300);
+        setTimeout(injectLogout, 800);
+        setTimeout(injectLogout, 1500);
+        setTimeout(injectLogout, 3000);
 
         window.addEventListener('resize', function() {
           var aside = document.querySelector('aside.w-60');

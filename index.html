@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-v="41">
+<html lang="zh-CN" data-v="42">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
@@ -11,7 +11,7 @@
     <!-- 版本自检：无需手动清缓存，检测到旧版自动刷新拿新版 -->
     <script>
       (function() {
-        var V = '41';
+        var V = '42';
         try {
           var k = '__qrcts_v__';
           var old = localStorage.getItem(k);
@@ -32,14 +32,14 @@
         } catch (e) {}
       })();
     </script>
-    <script src="/env-config.js?v=41" defer></script>
+    <script src="/env-config.js?v=42" defer></script>
     <!-- 提前建立连接，缩短首屏等待 -->
     <link rel="preconnect" href="https://ikdpglqstdyqwiiitfmz.supabase.co" crossorigin>
     <link rel="dns-prefetch" href="https://ikdpglqstdyqwiiitfmz.supabase.co">
-    <link rel="preload" as="style" crossorigin href="/assets/index-v41-CMqRsil8.css?v=41">
+    <link rel="preload" as="style" crossorigin href="/assets/index-v42-CMqRsil8.css?v=42">
     <!-- Tailwind CSS 先加载 -->
-    <link rel="stylesheet" crossorigin href="/assets/index-v41-CMqRsil8.css?v=41">
-    <link rel="preload" as="script" crossorigin href="/assets/index-v41-muZMgV9K.js?v=41">
+    <link rel="stylesheet" crossorigin href="/assets/index-v42-CMqRsil8.css?v=42">
+    <link rel="preload" as="script" crossorigin href="/assets/index-v42-muZMgV9K.js?v=42">
     <!-- 响应式覆盖 CSS 后加载（确保优先级） -->
     <style>
       html { font-size: 16px; -webkit-text-size-adjust: 100%; }
@@ -50,8 +50,28 @@
       /* 原材料录入表单：每字段独占一行，输入框拉长 */
       .grid.grid-cols-1.gap-4 .select,
       .grid.grid-cols-1.gap-4 .input { width: 100% !important; }
-      /* 操作工退出按钮（注入到 /t/ 页头） */
-      #qrcts-logout-btn { white-space: nowrap; }
+      /* 操作工退出按钮（注入到 /t/ 页面右上角，必须一眼可见） */
+      #qrcts-logout-host {
+        position: fixed !important;
+        top: 10px !important;
+        right: 10px !important;
+        z-index: 999999 !important;
+        pointer-events: none !important;
+      }
+      #qrcts-logout-btn {
+        white-space: nowrap !important;
+        pointer-events: auto !important;
+        background: #dc2626 !important;
+        color: #fff !important;
+        border: 2px solid #fff !important;
+        border-radius: 8px !important;
+        padding: 8px 14px !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        line-height: 1.2 !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.35) !important;
+      }
 
       /* ===== 侧边栏：小屏抽屉 ===== */
       @media (max-width: 767px) {
@@ -210,9 +230,21 @@
         .grid.grid-cols-3.gap-4.text-sm p[class*="text-gray"] {
           font-size: 11px !important;
         }
+        /* 工序流转记录：确认/人员/班次/记录日期 每项独占一行 */
         [class*="grid-cols-4"]:not([class*="lg:grid-cols-5"]) {
-          grid-template-columns: 1fr 1fr !important;
+          grid-template-columns: 1fr !important;
           gap: 8px !important;
+        }
+        [class*="grid-cols-4"]:not([class*="lg:grid-cols-5"]) > div {
+          width: 100% !important;
+        }
+        /* 工序填写表单：确认/人员姓名/班次/记录日期 每项独占一行 */
+        [class*="grid-cols-2"][class*="md:grid-cols-4"] {
+          grid-template-columns: 1fr !important;
+          gap: 12px !important;
+        }
+        [class*="grid-cols-2"][class*="md:grid-cols-4"] > div {
+          width: 100% !important;
         }
         [class*="grid-cols-6"]:not([class*="lg:grid-cols-5"]) {
           grid-template-columns: 1fr 1fr 1fr !important;
@@ -307,7 +339,7 @@
         .p-6 { padding: 18px !important; }
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-v41-muZMgV9K.js?v=41"></script>
+    <script type="module" crossorigin src="/assets/index-v42-muZMgV9K.js?v=42"></script>
   </head>
   <body>
     <div id="root"></div>
@@ -380,6 +412,15 @@
                 gc.indexOf('lg:') === -1) {
               applyBlockLayout(g);
             }
+            /* 新增：确认/人员/班次/记录日期 的 grid-cols-4 与 grid-cols-2 md:grid-cols-4 */
+            if (gc.indexOf('grid-cols-4') !== -1 &&
+                gc.indexOf('lg:grid-cols-5') === -1) {
+              applyBlockLayout(g);
+            }
+            if (gc.indexOf('grid-cols-2') !== -1 &&
+                gc.indexOf('md:grid-cols-4') !== -1) {
+              applyBlockLayout(g);
+            }
           }
         }
 
@@ -422,7 +463,7 @@
           window.location.href = '/login';
         };
         function injectLogout() {
-          if (!location.pathname.startsWith('/t/')) {
+          if (!location.pathname || !location.pathname.startsWith('/t/')) {
             var ex = document.getElementById('qrcts-logout-host');
             if (ex && ex.parentNode) ex.parentNode.removeChild(ex);
             return;
@@ -432,15 +473,13 @@
           if (!host) {
             host = document.createElement('div');
             host.id = 'qrcts-logout-host';
-            host.style.cssText = 'position:fixed;top:12px;right:12px;z-index:10001;pointer-events:none;';
+            document.body.appendChild(host);
             var btn = document.createElement('button');
             btn.id = 'qrcts-logout-btn';
             btn.type = 'button';
             btn.textContent = '退出';
-            btn.style.cssText = 'pointer-events:auto;background:rgba(255,255,255,0.95);color:#1e3a8a;border:none;border-radius:6px;padding:6px 10px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.2);line-height:1.4;';
             btn.addEventListener('click', window.__qrctsLogout);
             host.appendChild(btn);
-            document.body.appendChild(host);
           }
           // 同时尝试注入到页头内，与原生布局融为一体
           var headers = document.querySelectorAll('header.bg-primary-950');

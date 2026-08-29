@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-v="42">
+<html lang="zh-CN" data-v="43">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
@@ -8,38 +8,54 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>二维码溯源系统</title>
-    <!-- 版本自检：无需手动清缓存，检测到旧版自动刷新拿新版 -->
+    <!-- 版本自检：无需手动清缓存，检测到旧版自动刷新拿新版；页面常开也每 30s 轮询 -->
     <script>
       (function() {
-        var V = '42';
+        var V = '43';
+        var checked = false;
+        function checkNew() {
+          try {
+            var url = location.href.split('#')[0];
+            if (url.indexOf('?') === -1) url += '?__qrchk=' + Date.now();
+            else url += '&__qrchk=' + Date.now();
+            fetch(url, { cache: 'no-store' }).then(function(r) { return r.text(); }).then(function(h) {
+              var m = h.match(/data-v="([^"]+)"/);
+              if (m && m[1] !== V) {
+                try { if ('caches' in window) { caches.keys().then(function(ks) { ks.forEach(function(kk) { caches.delete(kk); }); }); } } catch (e) {}
+                location.reload();
+              }
+            }).catch(function() {});
+          } catch (e) {}
+        }
         try {
           var k = '__qrcts_v__';
           var old = localStorage.getItem(k);
           localStorage.setItem(k, V);
           if (old && old !== V) {
-            if ('caches' in window) { caches.keys().then(function(ks) { ks.forEach(function(kk) { caches.delete(kk); }); }); }
+            try { if ('caches' in window) { caches.keys().then(function(ks) { ks.forEach(function(kk) { caches.delete(kk); }); }); } } catch (e) {}
             location.reload();
             return;
           }
           if (document.documentElement.getAttribute('data-v') !== V) { location.reload(); return; }
-          /* 兜底：页面被缓存成旧版时，绕过缓存拉一次最新 HTML 对比版本号 */
-          try {
-            fetch(location.href.split('#')[0], { cache: 'no-store' }).then(function(r) { return r.text(); }).then(function(h) {
-              var m = h.match(/data-v="([^"]+)"/);
-              if (m && m[1] !== V) location.reload();
-            }).catch(function() {});
-          } catch (e) {}
+          /* 打开瞬间兜底拉一次最新 HTML */
+          checkNew();
         } catch (e) {}
+        /* 页面一直开着也定时轮询（带 cache-buster），发现新版本自动刷新 */
+        setInterval(checkNew, 30000);
+        window.addEventListener('focus', checkNew);
+        document.addEventListener('visibilitychange', function() {
+          if (!document.hidden) checkNew();
+        });
       })();
     </script>
-    <script src="/env-config.js?v=42" defer></script>
+    <script src="/env-config.js?v=43" defer></script>
     <!-- 提前建立连接，缩短首屏等待 -->
     <link rel="preconnect" href="https://ikdpglqstdyqwiiitfmz.supabase.co" crossorigin>
-    <link rel="dns-prefetch" href="https://ikdpglqstdyqwiiitfmz.supabase.co">
-    <link rel="preload" as="style" crossorigin href="/assets/index-v42-CMqRsil8.css?v=42">
+    <link rel="dns-prefetch" href="https://ikdpglqstdywiiitfmz.supabase.co">
+    <link rel="preload" as="style" crossorigin href="/assets/index-v43-CMqRsil8.css?v=43">
     <!-- Tailwind CSS 先加载 -->
-    <link rel="stylesheet" crossorigin href="/assets/index-v42-CMqRsil8.css?v=42">
-    <link rel="preload" as="script" crossorigin href="/assets/index-v42-muZMgV9K.js?v=42">
+    <link rel="stylesheet" crossorigin href="/assets/index-v43-CMqRsil8.css?v=43">
+    <link rel="preload" as="script" crossorigin href="/assets/index-v43-muZMgV9K.js?v=43">
     <!-- 响应式覆盖 CSS 后加载（确保优先级） -->
     <style>
       html { font-size: 16px; -webkit-text-size-adjust: 100%; }
@@ -339,7 +355,7 @@
         .p-6 { padding: 18px !important; }
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-v42-muZMgV9K.js?v=42"></script>
+    <script type="module" crossorigin src="/assets/index-v43-muZMgV9K.js?v=43"></script>
   </head>
   <body>
     <div id="root"></div>
@@ -463,12 +479,14 @@
           window.location.href = '/login';
         };
         function injectLogout() {
-          if (!location.pathname || !location.pathname.startsWith('/t/')) {
+          // 仅在登录页不显示退出按钮（含 hash 路由 /#/login 与 /login 两种形态）
+          var path = (location.pathname || '') + (location.hash || '');
+          if (path.indexOf('login') !== -1) {
             var ex = document.getElementById('qrcts-logout-host');
             if (ex && ex.parentNode) ex.parentNode.removeChild(ex);
             return;
           }
-          // 兜底：固定右上角退出按钮，确保手机端一定能点到
+          // 固定右上角红色退出按钮：所有已登录页面均显示，确保手机端一定能点到
           var host = document.getElementById('qrcts-logout-host');
           if (!host) {
             host = document.createElement('div');
@@ -477,7 +495,7 @@
             var btn = document.createElement('button');
             btn.id = 'qrcts-logout-btn';
             btn.type = 'button';
-            btn.textContent = '退出';
+            btn.textContent = '退出登录';
             btn.addEventListener('click', window.__qrctsLogout);
             host.appendChild(btn);
           }
@@ -493,7 +511,7 @@
             var hbtn = document.createElement('button');
             hbtn.id = 'qrcts-logout-header-btn';
             hbtn.type = 'button';
-            hbtn.textContent = '退出';
+            hbtn.textContent = '退出登录';
             hbtn.addEventListener('click', window.__qrctsLogout);
             hbtn.style.cssText = 'margin-left:auto;background:rgba(255,255,255,.18);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;line-height:1.4;';
             flex.appendChild(hbtn);

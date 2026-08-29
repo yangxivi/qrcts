@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-v="41">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
@@ -8,9 +8,38 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>二维码溯源系统</title>
-    <script src="/env-config.js?v=40"></script>
+    <!-- 版本自检：无需手动清缓存，检测到旧版自动刷新拿新版 -->
+    <script>
+      (function() {
+        var V = '41';
+        try {
+          var k = '__qrcts_v__';
+          var old = localStorage.getItem(k);
+          localStorage.setItem(k, V);
+          if (old && old !== V) {
+            if ('caches' in window) { caches.keys().then(function(ks) { ks.forEach(function(kk) { caches.delete(kk); }); }); }
+            location.reload();
+            return;
+          }
+          if (document.documentElement.getAttribute('data-v') !== V) { location.reload(); return; }
+          /* 兜底：页面被缓存成旧版时，绕过缓存拉一次最新 HTML 对比版本号 */
+          try {
+            fetch(location.href.split('#')[0], { cache: 'no-store' }).then(function(r) { return r.text(); }).then(function(h) {
+              var m = h.match(/data-v="([^"]+)"/);
+              if (m && m[1] !== V) location.reload();
+            }).catch(function() {});
+          } catch (e) {}
+        } catch (e) {}
+      })();
+    </script>
+    <script src="/env-config.js?v=41" defer></script>
+    <!-- 提前建立连接，缩短首屏等待 -->
+    <link rel="preconnect" href="https://ikdpglqstdyqwiiitfmz.supabase.co" crossorigin>
+    <link rel="dns-prefetch" href="https://ikdpglqstdyqwiiitfmz.supabase.co">
+    <link rel="preload" as="style" crossorigin href="/assets/index-v41-CMqRsil8.css?v=41">
     <!-- Tailwind CSS 先加载 -->
-    <link rel="stylesheet" crossorigin href="/assets/index-CMqRsil8.css?v=40">
+    <link rel="stylesheet" crossorigin href="/assets/index-v41-CMqRsil8.css?v=41">
+    <link rel="preload" as="script" crossorigin href="/assets/index-v41-muZMgV9K.js?v=41">
     <!-- 响应式覆盖 CSS 后加载（确保优先级） -->
     <style>
       html { font-size: 16px; -webkit-text-size-adjust: 100%; }
@@ -278,7 +307,7 @@
         .p-6 { padding: 18px !important; }
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-muZMgV9K.js?v=40"></script>
+    <script type="module" crossorigin src="/assets/index-v41-muZMgV9K.js?v=41"></script>
   </head>
   <body>
     <div id="root"></div>
